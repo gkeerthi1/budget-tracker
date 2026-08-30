@@ -4,17 +4,23 @@ from flask import Blueprint, request, jsonify, current_app
 from models import get_db
 from auth_utils import login_required, current_user_id
 from validators import validate_non_negative_amount
+from aggregations import get_remaining_balance, budget_status
 
 categories_bp = Blueprint("categories", __name__, url_prefix="/api/categories")
 
 
-def _category_to_dict(row):
-    return {
+def _category_to_dict(conn, user_id, row, with_status=True):
+    data = {
         "id": row["id"],
         "name": row["name"],
         "monthly_budget": row["monthly_budget"],
     }
-
+    if with_status:
+        remaining, spent = get_remaining_balance(conn, user_id, row)
+        data["spent_this_month"] = spent
+        data["remaining_balance"] = remaining
+        data["status"] = budget_status(spent, row["monthly_budget"])
+    return data
 
 @categories_bp.route("", methods=["GET"])
 @login_required
@@ -24,8 +30,9 @@ def list_categories():
         "SELECT * FROM categories WHERE user_id = ? ORDER BY name",
         (current_user_id(),),
     ).fetchall()
+    result = [_category_to_dict(conn, current_user_id(), r) for r in rows]
     conn.close()
-    return jsonify([_category_to_dict(r) for r in rows])
+    return jsonify(result)
 
 
 @categories_bp.route("", methods=["POST"])
@@ -56,11 +63,10 @@ def create_category():
         (current_user_id(), name, monthly_budget or 0),
     )
     conn.commit()
-    new_row = conn.execute(
-        "SELECT * FROM categories WHERE id = ?", (cur.lastrowid,)
-    ).fetchone()
+    new_row = conn.execute("SELECT * FROM categories WHERE id = ?", (cur.lastrowid,)).fetchone()
+    result = _category_to_dict(conn, current_user_id(), new_row)
     conn.close()
-    return jsonify(_category_to_dict(new_row)), 201
+    return jsonify(result), 201
 
 
 @categories_bp.route("/<int:category_id>", methods=["PUT"])
@@ -93,11 +99,10 @@ def update_category(category_id):
         (name, monthly_budget, category_id),
     )
     conn.commit()
-    updated = conn.execute(
-        "SELECT * FROM categories WHERE id = ?", (category_id,)
-    ).fetchone()
+    updated = conn.execute("SELECT * FROM categories WHERE id = ?", (category_id,)).fetchone()
+    result = _category_to_dict(conn, current_user_id(), updated)
     conn.close()
-    return jsonify(_category_to_dict(updated))
+    return jsonify(result)
 
 
 @categories_bp.route("/<int:category_id>", methods=["DELETE"])
