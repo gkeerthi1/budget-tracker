@@ -1,5 +1,5 @@
+"""Shared month-based aggregation helpers."""
 from datetime import date
-
 
 def current_month():
     return date.today().strftime("%Y-%m")
@@ -40,6 +40,7 @@ def get_month_totals(conn, user_id, month=None):
 
 
 def budget_status(spent, budget):
+    """Returns None, 'approaching_limit' (>=80%), or 'over_budget' (>=100%)."""
     if not budget or budget <= 0:
         return None
     percent = (spent / budget) * 100
@@ -51,6 +52,7 @@ def budget_status(spent, budget):
 
 
 def get_overall_status(conn, user_id, month=None):
+    """Whole-month budget = sum of all category budgets vs total expenses."""
     month = month or current_month()
     total_budget = conn.execute(
         "SELECT COALESCE(SUM(monthly_budget), 0) AS total FROM categories WHERE user_id = ?",

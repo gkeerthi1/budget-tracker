@@ -1,3 +1,4 @@
+"""Transaction routes: record income/expense, list transactions."""
 from flask import Blueprint, request, jsonify, current_app
 
 from models import get_db
