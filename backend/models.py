@@ -51,6 +51,16 @@ CREATE TABLE IF NOT EXISTS recurring_transactions (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
+
+CREATE TABLE IF NOT EXISTS savings_goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    target_amount REAL NOT NULL CHECK (target_amount > 0),
+    target_date TEXT NOT NULL,
+    current_amount REAL NOT NULL DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
 """
 
 

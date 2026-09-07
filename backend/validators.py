@@ -39,3 +39,15 @@ def validate_not_future_date(date_str):
     if parsed > date.today():
         return False, "Date cannot be in the future"
     return True, None
+
+def validate_future_date(date_str):
+    """For savings goal target dates, which must be upcoming, not past."""
+    if not date_str:
+        return False, "Date is required"
+    try:
+        parsed = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return False, "Date must be in YYYY-MM-DD format"
+    if parsed <= date.today():
+        return False, "Target date must be in the future"
+    return True, None
