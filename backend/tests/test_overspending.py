@@ -2,10 +2,12 @@ import os
 import sys
 import tempfile
 
+from datetime import date
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app import create_app
-
+TODAY = date.today().isoformat()
 
 def make_client():
     db_fd, db_path = tempfile.mkstemp()
@@ -22,9 +24,9 @@ def make_category(client, name="Food", budget=100):
     return client.post("/api/categories", json={"name": name, "monthly_budget": budget}).get_json()
 
 
-def spend(client, category_id, amount, day="2026-08-01"):
+def spend(client, category_id, amount, day=None):
     return client.post("/api/transactions", json={
-        "type": "expense", "amount": amount, "category_id": category_id, "spent_on": day
+        "type": "expense", "amount": amount, "category_id": category_id, "spent_on": day or TODAY
     })
 
 
