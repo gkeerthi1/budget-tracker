@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify, session, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from models import get_db
+from recurring_service import generate_due_transactions
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -17,9 +18,7 @@ def register():
         return jsonify({"error": "Email and password are required"}), 400
 
     conn = get_db(current_app.config["DATABASE"])
-    existing = conn.execute(
-        "SELECT id FROM users WHERE email = ?", (email,)
-    ).fetchone()
+    existing = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
     if existing:
         conn.close()
         return jsonify({"error": "An account with this email already exists"}), 409
@@ -40,15 +39,15 @@ def login():
     password = data.get("password") or ""
 
     conn = get_db(current_app.config["DATABASE"])
-    user = conn.execute(
-        "SELECT * FROM users WHERE email = ?", (email,)
-    ).fetchone()
-    conn.close()
+    user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
 
     if user is None or not check_password_hash(user["password_hash"], password):
+        conn.close()
         return jsonify({"error": "Invalid email or password"}), 401
 
     session["user_id"] = user["id"]
+    generate_due_transactions(conn, user["id"])
+    conn.close()
     return jsonify({"message": "Logged in", "email": user["email"]})
 
 

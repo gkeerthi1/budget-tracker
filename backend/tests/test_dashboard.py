@@ -3,10 +3,13 @@ import os
 import sys
 import tempfile
 
+from datetime import date
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app import create_app
 
+TODAY = date.today().isoformat()
 
 def make_client():
     db_fd, db_path = tempfile.mkstemp()
@@ -33,10 +36,10 @@ def test_dashboard_totals():
     ).get_json()
 
     client.post("/api/transactions", json={
-        "type": "income", "amount": 2000, "spent_on": "2026-08-01"
+        "type": "income", "amount": 2000, "spent_on": TODAY
     })
     client.post("/api/transactions", json={
-        "type": "expense", "amount": 100, "category_id": category["id"], "spent_on": "2026-08-02"
+        "type": "expense", "amount": 100, "category_id": category["id"], "spent_on": TODAY
     })
 
     resp = client.get("/api/dashboard/summary")

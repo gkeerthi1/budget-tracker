@@ -37,6 +37,20 @@ CREATE TABLE IF NOT EXISTS budgets (
     overall_limit REAL DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+CREATE TABLE IF NOT EXISTS recurring_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    category_id INTEGER,
+    type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+    amount REAL NOT NULL CHECK (amount > 0),
+    day_of_month INTEGER NOT NULL CHECK (day_of_month BETWEEN 1 AND 28),
+    note TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    last_generated_month TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+);
 """
 
 

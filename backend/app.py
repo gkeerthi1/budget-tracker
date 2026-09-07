@@ -6,6 +6,7 @@ from routes.auth import auth_bp
 from routes.categories import categories_bp
 from routes.transactions import transactions_bp
 from routes.dashboard import dashboard_bp
+from routes.recurring import recurring_bp
 
 
 def create_app(config=None):
@@ -22,6 +23,7 @@ def create_app(config=None):
     app.register_blueprint(categories_bp)
     app.register_blueprint(transactions_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(recurring_bp)
 
     @app.route("/api/health")
     def health():
