@@ -1,10 +1,10 @@
-"""Category management routes: create, list, edit, delete"""
+"""Category management routes: create, list, edit, delete."""
 from flask import Blueprint, request, jsonify, current_app
 
 from models import get_db
 from auth_utils import login_required, current_user_id
 from validators import validate_non_negative_amount
-from aggregations import get_remaining_balance, budget_status
+from aggregations import get_remaining_balance, budget_status, get_effective_budget, get_rollover_amount
 
 categories_bp = Blueprint("categories", __name__, url_prefix="/api/categories")
 
@@ -17,10 +17,14 @@ def _category_to_dict(conn, user_id, row, with_status=True):
     }
     if with_status:
         remaining, spent = get_remaining_balance(conn, user_id, row)
+        effective_budget = get_effective_budget(conn, user_id, row)
+        data["rollover_amount"] = get_rollover_amount(conn, user_id, row["id"])
+        data["effective_budget"] = effective_budget
         data["spent_this_month"] = spent
         data["remaining_balance"] = remaining
-        data["status"] = budget_status(spent, row["monthly_budget"])
+        data["status"] = budget_status(spent, effective_budget)
     return data
+
 
 @categories_bp.route("", methods=["GET"])
 @login_required

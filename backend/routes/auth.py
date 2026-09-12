@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from models import get_db
 from recurring_service import generate_due_transactions
+from rollover_service import apply_rollover_if_needed
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -46,6 +47,7 @@ def login():
         return jsonify({"error": "Invalid email or password"}), 401
 
     session["user_id"] = user["id"]
+    apply_rollover_if_needed(conn, user["id"])
     generate_due_transactions(conn, user["id"])
     conn.close()
     return jsonify({"message": "Logged in", "email": user["email"]})

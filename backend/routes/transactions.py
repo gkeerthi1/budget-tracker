@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify, current_app
 from models import get_db
 from auth_utils import login_required, current_user_id
 from validators import validate_positive_amount, validate_not_future_date
-from aggregations import get_remaining_balance, budget_status, get_overall_status
+from aggregations import get_remaining_balance, budget_status, get_overall_status, get_effective_budget
 
 transactions_bp = Blueprint("transactions", __name__, url_prefix="/api/transactions")
 
@@ -86,9 +86,10 @@ def create_transaction():
 
     if tx_type == "expense" and category is not None:
         remaining, spent = get_remaining_balance(conn, current_user_id(), category)
+        effective_budget = get_effective_budget(conn, current_user_id(), category)
         response["remaining_balance"] = remaining
         response["category_spent_this_month"] = spent
-        response["budget_warning"] = budget_status(spent, category["monthly_budget"])
+        response["budget_warning"] = budget_status(spent, effective_budget)
 
         total_budget, total_expenses, overall_flag = get_overall_status(conn, current_user_id())
         response["overall_warning"] = overall_flag

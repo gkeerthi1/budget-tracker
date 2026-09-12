@@ -52,6 +52,17 @@ CREATE TABLE IF NOT EXISTS recurring_transactions (
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
+CREATE TABLE IF NOT EXISTS budget_rollovers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    category_id INTEGER NOT NULL,
+    month TEXT NOT NULL,
+    rollover_amount REAL NOT NULL DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (category_id) REFERENCES categories(id),
+    UNIQUE (user_id, category_id, month)
+);
+
 CREATE TABLE IF NOT EXISTS savings_goals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
