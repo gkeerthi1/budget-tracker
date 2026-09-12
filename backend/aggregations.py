@@ -1,6 +1,7 @@
 """Shared month-based aggregation helpers."""
 from datetime import date
 
+
 def current_month():
     return date.today().strftime("%Y-%m")
 
@@ -19,9 +20,28 @@ def get_category_spent(conn, user_id, category_id, month=None):
     return row["total"]
 
 
+def get_rollover_amount(conn, user_id, category_id, month=None):
+    month = month or current_month()
+    row = conn.execute(
+        "SELECT rollover_amount FROM budget_rollovers "
+        "WHERE user_id = ? AND category_id = ? AND month = ?",
+        (user_id, category_id, month),
+    ).fetchone()
+    return row["rollover_amount"] if row else 0
+
+
+def get_effective_budget(conn, user_id, category_row, month=None):
+    """The actual budget in force for this category this month: the
+    category's base monthly_budget plus any rollover carried in from
+    the previous month (0 if no rollover has been computed/applies)."""
+    rollover = get_rollover_amount(conn, user_id, category_row["id"], month)
+    return category_row["monthly_budget"] + rollover
+
+
 def get_remaining_balance(conn, user_id, category_row, month=None):
     spent = get_category_spent(conn, user_id, category_row["id"], month)
-    return category_row["monthly_budget"] - spent, spent
+    effective_budget = get_effective_budget(conn, user_id, category_row, month)
+    return effective_budget - spent, spent
 
 
 def get_month_totals(conn, user_id, month=None):
@@ -52,11 +72,12 @@ def budget_status(spent, budget):
 
 
 def get_overall_status(conn, user_id, month=None):
-    """Whole-month budget = sum of all category budgets vs total expenses."""
+    """Whole-month budget = sum of all categories' EFFECTIVE budgets
+    (base + rollover) vs total expenses."""
     month = month or current_month()
-    total_budget = conn.execute(
-        "SELECT COALESCE(SUM(monthly_budget), 0) AS total FROM categories WHERE user_id = ?",
-        (user_id,),
-    ).fetchone()["total"]
+    categories = conn.execute(
+        "SELECT * FROM categories WHERE user_id = ?", (user_id,)
+    ).fetchall()
+    total_budget = sum(get_effective_budget(conn, user_id, cat, month) for cat in categories)
     _, total_expenses = get_month_totals(conn, user_id, month)
     return total_budget, total_expenses, budget_status(total_expenses, total_budget)
