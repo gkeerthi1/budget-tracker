@@ -1,0 +1,12 @@
+<nav *ngIf="auth.loggedIn()" data-testid="nav-bar">
+  <a routerLink="/dashboard" data-testid="nav-dashboard">Dashboard</a>
+  <a routerLink="/categories" data-testid="nav-categories">Categories</a>
+  <a routerLink="/transactions" data-testid="nav-transactions">Transactions</a>
+  <a routerLink="/recurring" data-testid="nav-recurring">Recurring</a>
+  <a routerLink="/goals" data-testid="nav-goals">Goals</a>
+  <button (click)="logout()" data-testid="logout-btn">Log out</button>
+</nav>
+
+<main>
+  <router-outlet></router-outlet>
+</main>

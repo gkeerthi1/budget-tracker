@@ -8,10 +8,12 @@ from routes.transactions import transactions_bp
 from routes.dashboard import dashboard_bp
 from routes.recurring import recurring_bp
 from routes.goals import goals_bp
+from flask_cors import CORS   # add this import at the top with the others
 
 
 def create_app(config=None):
     app = Flask(__name__)
+    CORS(app, supports_credentials=True, origins=["http://localhost:4200"])   # add this line
     app.config["SECRET_KEY"] = "dev-secret-change-me"
     app.config["DATABASE"] = "budget_tracker.db"
 
