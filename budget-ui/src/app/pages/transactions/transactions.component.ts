@@ -4,6 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { TransactionsService, Transaction } from '../../services/transactions.service';
 import { CategoriesService, Category } from '../../services/categories.service';
 
+/**
+ * Returns today's date as yyyy-mm-dd using LOCAL time. Deliberately not
+ * `new Date().toISOString()`, which converts to UTC - in any timezone
+ * behind UTC (e.g. US Eastern), that rolls over to "tomorrow" every
+ * evening, and the backend then rejects the pre-filled date as a future
+ * date. This exact bug was caught by the Playwright system tests.
+ */
+function localDateIso(d: Date = new Date()): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 @Component({
   selector: 'app-transactions',
   standalone: true,
@@ -76,7 +90,7 @@ export class TransactionsComponent implements OnInit {
   type: 'income' | 'expense' = 'expense';
   amount: number | null = null;
   categoryId: number | null = null;
-  spentOn = new Date().toISOString().slice(0, 10);
+  spentOn = localDateIso();
   note = '';
 
   error = '';
